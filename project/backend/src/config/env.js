@@ -3,12 +3,12 @@
  */
 
 import dotenv from "dotenv"; //this is used to read .env files 
-dotenv.config; 
+dotenv.config(); 
 
 function required(name){
 
     const v = process.env[name];
-    if(!v) throw new Error(`missing env var: ${name} `);
+    if(!v) throw new Error(`missing env var: ${name}`);
     return v ; 
 }
 
