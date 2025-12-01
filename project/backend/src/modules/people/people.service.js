@@ -1,8 +1,9 @@
 /**
  * All Mongo I/O for people Funtions: create(data), list(), get(id), update(id,data), remove(id)
  */
-import {PeopleRepo} from "./people.repo.js"; 
-export const PeopleService = {
+const PeopleRepo = require('./people.repo');
+
+const PeopleService = {
     async create(input){
         return PeopleRepo.create(input);
     },
@@ -10,16 +11,18 @@ export const PeopleService = {
         return PeopleRepo.list();
     },
     async getOrThrow(id){
-        const p = await PeopleRepo.get(id); 
+        const p = await PeopleRepo.get(id);
         if (!p) throw {
-            status: 404, 
-            message: "Person not found",
+            status: 404,
+            message: 'Person not found',
         };
-        return p ; 
+        return p;
     },
     async update (id,input) { return PeopleRepo.update(id, input);
      },
     async remove(id){
-        return PeopleRepo.remove(id); 
+        return PeopleRepo.remove(id);
     }
-}; 
+};
+
+module.exports = PeopleService;

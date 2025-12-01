@@ -5,22 +5,23 @@
  * Keeps third-party details out of services (single responsibility).
  */
 
-import fetch from "node-fetch";
-import { env } from "../config/env.js";
+const fetch = require('node-fetch');
+const { env } = require('../config/env');
 
-export async function synthesizeRelationshipLine(text) {
-  if (!env.ELEVEN_API_KEY || !env.ELEVEN_VOICE_ID) throw new Error("Missing ElevenLabs env");
-  const url = `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVEN_VOICE_ID}`;
-  const r = await fetch(url, {
-    method: "POST",
-    headers: {
-      "xi-api-key": env.ELEVEN_API_KEY,
-      "Content-Type": "application/json",
-      "Accept": "audio/mpeg"
-    },
-    body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings:{ stability:0.5, similarity_boost:0.7 } })
-  });
-  if (!r.ok) throw new Error(`TTS failed: ${r.status} ${await r.text()}`);
-  return Buffer.from(await r.arrayBuffer());
+async function synthesizeRelationshipLine(text) {
+    if (!env.ELEVEN_API_KEY || !env.ELEVEN_VOICE_ID) throw new Error("Missing ElevenLabs env");
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVEN_VOICE_ID}`;
+    const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${env.ELEVEN_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings:{ stability:0.5, similarity_boost:0.7 } })
+    });
+    if (!r.ok) throw new Error(`TTS failed: ${r.status} ${await r.text()}`);
+    return Buffer.from(await r.arrayBuffer());
 }
+
+module.exports = { synthesizeRelationshipLine };
 
