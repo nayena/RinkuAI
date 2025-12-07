@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "rinku-mobile",
-    "slug": "rinku-mobile",
+    "name": "frontend",
+    "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -34,8 +34,7 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

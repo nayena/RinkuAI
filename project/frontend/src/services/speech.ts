@@ -4,12 +4,12 @@
 import{API } from "./api";  
 
 export const SpeechAPI = {
-    relationship: async(personId :string): Promise<string> =>{
+    relationshipUrl: async(personId :string): Promise<string> =>{
 
         const {data} = await API.post("/speech/relationship", { personId});
        //data.url is a relative path on backend; build absolute
         const base = API.defaults.baseURL!.replace(/\/$/, "") ; 
-        return `${base}${data.url}`;
+        return `${base}${data.url}`; 
 
     },
 };
