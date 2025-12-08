@@ -159,9 +159,9 @@ EXPO_PUBLIC_API_URL=http://192.168.1.100:4000 npm start
 
 ```
 PORT=4000
-MONGO_URL=mongodb://localhost:27017/rinku
-ELEVEN_API_KEY=your_key
-ELEVEN_VOICE_ID=your_voice_id
+MONGO_URL
+ELEVEN_API_KEY
+ELEVEN_VOICE_ID
 ```
 
 ### Frontend
