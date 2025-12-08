@@ -1,10 +1,12 @@
 /**
- * Express Router, health check or status endpoint, creates an acesible endpoint  at GET /health
- * Use:
+ * Health check endpoint - GET /health
  */
+import { Router } from 'express';
 
-const { Router } = require('express');
 const healthRouter = Router();
-healthRouter.get('/', (_req, res) => res.json({ok:true, service: 'rinku'}));
 
-module.exports = healthRouter;
+healthRouter.get('/', (_req, res) => {
+  res.json({ ok: true, service: 'rinku' });
+});
+
+export default healthRouter;

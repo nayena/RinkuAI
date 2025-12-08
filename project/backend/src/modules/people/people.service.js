@@ -1,28 +1,40 @@
 /**
- * All Mongo I/O for people Funtions: create(data), list(), get(id), update(id,data), remove(id)
+ * People service - business logic for people operations
  */
-const PeopleRepo = require('./people.repo');
+import PeopleRepo from './people.repo.js';
 
 const PeopleService = {
-    async create(input){
-        return PeopleRepo.create(input);
-    },
-    async list(){
-        return PeopleRepo.list();
-    },
-    async getOrThrow(id){
-        const p = await PeopleRepo.get(id);
-        if (!p) throw {
-            status: 404,
-            message: 'Person not found',
-        };
-        return p;
-    },
-    async update (id,input) { return PeopleRepo.update(id, input);
-     },
-    async remove(id){
-        return PeopleRepo.remove(id);
+  async create(input) {
+    return PeopleRepo.create(input);
+  },
+
+  async list() {
+    return PeopleRepo.list();
+  },
+
+  async getOrThrow(id) {
+    const person = await PeopleRepo.get(id);
+    if (!person) {
+      const err = new Error('Person not found');
+      err.status = 404;
+      throw err;
     }
+    return person;
+  },
+
+  async update(id, input) {
+    const person = await PeopleRepo.update(id, input);
+    if (!person) {
+      const err = new Error('Person not found');
+      err.status = 404;
+      throw err;
+    }
+    return person;
+  },
+
+  async remove(id) {
+    return PeopleRepo.remove(id);
+  },
 };
 
-module.exports = PeopleService;
+export default PeopleService;

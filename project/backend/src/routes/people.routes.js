@@ -1,7 +1,10 @@
-const { Router } = require('express');
-const PeopleController = require('../controllers/people.controller');
-const { validate } = require('../middlewares/validate');
-const { CreatePersonDTO, UpdatePersonDTO, ParamIdDTO } = require('../modules/people/people.types');
+/**
+ * People routes - CRUD for loved ones
+ */
+import { Router } from 'express';
+import PeopleController from '../controllers/people.controller.js';
+import { validate } from '../middlewares/validate.js';
+import { CreatePersonDTO, UpdatePersonDTO, ParamIdDTO } from '../modules/people/people.types.js';
 
 const peopleRouter = Router();
 
@@ -11,5 +14,4 @@ peopleRouter.get('/:id', validate(ParamIdDTO), PeopleController.get);
 peopleRouter.put('/:id', validate(UpdatePersonDTO), PeopleController.update);
 peopleRouter.delete('/:id', validate(ParamIdDTO), PeopleController.remove);
 
-module.exports = peopleRouter;
-
+export default peopleRouter;

@@ -1,38 +1,42 @@
 /**
- * server is the one that runs the app and connects it to the ports and the incomming variables
+ * server.js - Entry point that boots the Express app and connects to MongoDB
  */
-require ("dotenv").config(); 
-const express  = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors") ; 
+import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
 
-const errorHandler= require("./middlewares/errorHandler.js"); 
-const healthRouter=  require("./routes/health.routes.js") ; 
-const peopleRouter = require("./routes/people.routes.js"); 
-const speechRouter = require("./routes/speech.routes.js"); 
+import errorHandler from './middlewares/errorHandler.js';
+import healthRouter from './routes/health.routes.js';
+import peopleRouter from './routes/people.routes.js';
+import speechRouter from './routes/speech.routes.js';
 
-const App = express() ; 
-//middleware 
-App.use(cors());
-App.use(express.json());
+const app = express();
 
-//routes 
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-App.use("/heath", healthRouter) ; 
-App.use("/people",peopleRouter);
-App.use("/speech", speechRouter); 
-App.use(errorHandler); 
+// Routes
+app.use('/health', healthRouter);
+app.use('/people', peopleRouter);
+app.use('/speech', speechRouter);
 
-//connect to mongoDB and start server
-const PORT = process.env.PORT || 4000
+// Error handler (must be last)
+app.use(errorHandler);
+
+// Connect to MongoDB and start server
+const PORT = process.env.PORT || 4000;
+
 mongoose
-    .connect(process.env.MONGO_URL)
-    .then(() => {
-        console.log("Connected to MONGO DB");
-        App.listen(PORT, () =>{
-            console.log(`Server listening on port ${PORT}`);
-        });
-    })
-    .catch((err) =>{
-        console.log("Failed to Connect to MongoDB" , err) 
-    }) ;
+  .connect(process.env.MONGO_URL)
+  .then(() => {
+    console.log('✓ Connected to MongoDB');
+    app.listen(PORT, () => {
+      console.log(`✓ Server listening on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('✗ Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  });

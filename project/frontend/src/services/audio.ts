@@ -21,7 +21,6 @@ async function configureAudio(): Promise<void> {
     console.warn('[Audio] Failed to configure audio mode:', error);
   }
 }
-
 /**
  * Play audio from a URL
  */

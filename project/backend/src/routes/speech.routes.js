@@ -1,10 +1,14 @@
-const { Router } = require('express');
-const SpeechController = require('../controllers/speech.controller');
-const { validate } = require('../middlewares/validate');
-const { SpeakDTO, ParamIdDTO } = require('../modules/speech/speech.types');
+/**
+ * Speech routes - TTS audio generation and streaming
+ */
+import { Router } from 'express';
+import SpeechController from '../controllers/speech.controller.js';
+import { validate } from '../middlewares/validate.js';
+import { SpeakDTO, ParamIdDTO } from '../modules/speech/speech.types.js';
 
 const speechRouter = Router();
+
 speechRouter.post('/relationship', validate(SpeakDTO), SpeechController.relationshipUrl);
 speechRouter.get('/relationship/:id', validate(ParamIdDTO), SpeechController.relationshipMp3);
 
-module.exports = speechRouter;
+export default speechRouter;

@@ -1,27 +1,48 @@
 /**
- * Responsibility: The low-level HTTP call to ElevenLabs TTS.
- * Inputs: text to speak; reads ELEVEN_API_KEY and ELEVEN_VOICE_ID from env.
- * Output: Buffer of audio/mpeg.
- * Keeps third-party details out of services (single responsibility).
+ * ElevenLabs TTS integration
+ * Handles the low-level HTTP call to ElevenLabs API
  */
 
-const fetch = require('node-fetch');
-const { env } = require('../config/env');
+/**
+ * Synthesizes text to speech using ElevenLabs API
+ * @param {string} text - The text to synthesize
+ * @returns {Promise<Buffer>} - The audio/mpeg buffer
+ */
+export async function synthesizeRelationshipLine(text) {
+  const apiKey = process.env.ELEVEN_API_KEY;
+  const voiceId = process.env.ELEVEN_VOICE_ID;
 
-async function synthesizeRelationshipLine(text) {
-    if (!env.ELEVEN_API_KEY || !env.ELEVEN_VOICE_ID) throw new Error("Missing ElevenLabs env");
-    const url = `https://api.elevenlabs.io/v1/text-to-speech/${env.ELEVEN_VOICE_ID}`;
-    const r = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${env.ELEVEN_API_KEY}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ text, model_id: "eleven_multilingual_v2", voice_settings:{ stability:0.5, similarity_boost:0.7 } })
-    });
-    if (!r.ok) throw new Error(`TTS failed: ${r.status} ${await r.text()}`);
-    return Buffer.from(await r.arrayBuffer());
+  if (!apiKey || !voiceId) {
+    const err = new Error('Missing ElevenLabs environment variables (ELEVEN_API_KEY, ELEVEN_VOICE_ID)');
+    err.status = 503;
+    throw err;
+  }
+
+  const url = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'audio/mpeg',
+    },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const err = new Error(`ElevenLabs TTS failed: ${response.status} - ${errorText}`);
+    err.status = 502;
+    throw err;
+  }
+
+  return Buffer.from(await response.arrayBuffer());
 }
-
-module.exports = { synthesizeRelationshipLine };
-
