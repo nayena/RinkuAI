@@ -1,44 +1,47 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Rinku",
+    "slug": "Rinku",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "rinkumobile",
-    "userInterfaceStyle": "automatic",
+    "scheme": "rinku",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
-      }
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
-    },
     "plugins": [
       "expo-router",
       [
-        "expo-splash-screen",
+        "expo-camera",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "cameraPermission": "Rinku needs camera access to help identify your loved ones."
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rinku needs access to your photos to add pictures of your loved ones.",
+          "cameraPermission": "Rinku needs camera access to take photos of your loved ones."
+        }
+      ],
+      "expo-audio"
     ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+    "ios": {
+      "bundleIdentifier": "com.rinku.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Rinku needs camera access to help identify your loved ones.",
+        "NSPhotoLibraryUsageDescription": "Rinku needs access to your photos to add pictures of your loved ones.",
+        "NSMicrophoneUsageDescription": "Rinku needs microphone access for voice commands."
+      }
+    },
+    "android": {
+      "package": "com.rinku.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E8E4F3"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     }
   }
 }

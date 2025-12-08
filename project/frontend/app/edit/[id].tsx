@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -12,35 +12,39 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { usePeople } from '../../src/context/PeopleContext';
 import { colors, shadows, borderRadius, spacing } from '../../src/theme/colors';
 import { createFaceData } from '../../src/services/faceRecognition';
-import { FaceData } from '../../src/types/domain';
 
-export default function AddLovedOne() {
-  const { add } = usePeople();
+export default function EditPerson() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { getById, update, remove } = usePeople();
+  const person = getById(id);
+
   const [displayName, setDisplayName] = useState('');
   const [familiarName, setFamiliarName] = useState('');
   const [relationship, setRelationship] = useState('');
   const [prompt, setPrompt] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [faceData, setFaceData] = useState<FaceData | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (person) {
+      setDisplayName(person.displayName);
+      setFamiliarName(person.familiarName || '');
+      setRelationship(person.relationship);
+      setPrompt(person.prompts?.[0]?.text || '');
+      setPhotoUri(person.photos?.[0]?.uri || null);
+    }
+  }, [person]);
 
   const relationshipSuggestions = [
     'daughter', 'son', 'spouse', 'grandchild', 
     'friend', 'neighbor', 'caregiver', 'sibling'
   ];
-
-  async function processPhoto(uri: string) {
-    // Create face data (MVP version - just stores the photo reference)
-    const data = createFaceData(uri);
-    setFaceData(data);
-    setPhotoUri(uri);
-  }
 
   async function pickImage() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -57,7 +61,7 @@ export default function AddLovedOne() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      await processPhoto(result.assets[0].uri);
+      setPhotoUri(result.assets[0].uri);
     }
   }
 
@@ -75,20 +79,16 @@ export default function AddLovedOne() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      await processPhoto(result.assets[0].uri);
+      setPhotoUri(result.assets[0].uri);
     }
   }
 
   function showPhotoOptions() {
-    Alert.alert(
-      'Add Face Photo',
-      'Add a clear photo of this person\'s face',
-      [
-        { text: 'Take Photo', onPress: takePhoto },
-        { text: 'Choose from Library', onPress: pickImage },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Change Photo', 'Choose how to add a photo', [
+      { text: 'Take Photo', onPress: takePhoto },
+      { text: 'Choose from Library', onPress: pickImage },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   }
 
   async function onSave() {
@@ -96,33 +96,19 @@ export default function AddLovedOne() {
       return Alert.alert('Required Fields', 'Please enter a name and relationship');
     }
 
-    if (!photoUri) {
-      Alert.alert(
-        'No Photo',
-        'Adding a photo helps Rinku recognize this person. Add one now?',
-        [
-          { text: 'Add Photo', onPress: showPhotoOptions },
-          { text: 'Skip', onPress: saveWithoutPhoto },
-        ]
-      );
-      return;
-    }
-
-    await saveWithoutPhoto();
-  }
-
-  async function saveWithoutPhoto() {
     setSaving(true);
     try {
-      await add({
+      const faceData = photoUri ? createFaceData(photoUri) : undefined;
+      
+      await update(id, {
         displayName,
         familiarName: familiarName || undefined,
         relationship,
         prompts: prompt ? [{ text: prompt }] : [],
         photos: photoUri ? [{ uri: photoUri }] : [],
-        faceData: faceData || undefined,
+        faceData,
       });
-      Alert.alert('Success', 'Memory card created!', [
+      Alert.alert('Success', 'Memory card updated!', [
         { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (error) {
@@ -131,6 +117,41 @@ export default function AddLovedOne() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function onDelete() {
+    Alert.alert(
+      'Delete Memory Card',
+      `Are you sure you want to remove ${person?.familiarName || person?.displayName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await remove(id);
+              router.replace('/(tabs)/people');
+            } catch (error) {
+              Alert.alert('Error', 'Could not delete. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  if (!person) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>Person not found</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backLink}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -144,8 +165,10 @@ export default function AddLovedOne() {
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.title}>Add Someone</Text>
-          <View style={styles.placeholder} />
+          <Text style={styles.title}>Edit Memory</Text>
+          <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+            <Ionicons name="trash-outline" size={24} color={colors.error} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView 
@@ -153,13 +176,8 @@ export default function AddLovedOne() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Face Photo Section */}
-          <View style={styles.photoSection}>
-            <Text style={styles.sectionTitle}>Face Photo</Text>
-            <Text style={styles.sectionHint}>
-              Add a clear face photo for recognition
-            </Text>
-            
+          {/* Avatar / Photo picker */}
+          <View style={styles.avatarSection}>
             <TouchableOpacity 
               style={[styles.avatar, photoUri && styles.avatarWithPhoto]} 
               onPress={showPhotoOptions}
@@ -168,19 +186,11 @@ export default function AddLovedOne() {
                 <Image source={{ uri: photoUri }} style={styles.avatarImage} />
               ) : (
                 <>
-                  <Ionicons name="person-add" size={40} color={colors.textMuted} />
-                  <Text style={styles.avatarText}>Add Face Photo</Text>
+                  <Ionicons name="camera" size={32} color={colors.textMuted} />
+                  <Text style={styles.avatarText}>Add Photo</Text>
                 </>
               )}
             </TouchableOpacity>
-
-            {photoUri && (
-              <View style={styles.photoStatus}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-                <Text style={styles.photoStatusText}>Photo added</Text>
-              </View>
-            )}
-
             {photoUri && (
               <TouchableOpacity style={styles.changePhotoButton} onPress={showPhotoOptions}>
                 <Text style={styles.changePhotoText}>Change Photo</Text>
@@ -191,7 +201,7 @@ export default function AddLovedOne() {
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name *</Text>
+              <Text style={styles.label}>Full Name</Text>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. Sofia Martinez"
@@ -213,7 +223,7 @@ export default function AddLovedOne() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Relationship *</Text>
+              <Text style={styles.label}>Relationship</Text>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. granddaughter"
@@ -222,7 +232,7 @@ export default function AddLovedOne() {
                 onChangeText={setRelationship}
               />
               <View style={styles.suggestions}>
-                {relationshipSuggestions.map((r) => (
+                {relationshipSuggestions.slice(0, 4).map((r) => (
                   <TouchableOpacity
                     key={r}
                     style={[
@@ -245,7 +255,7 @@ export default function AddLovedOne() {
               <Text style={styles.labelHint}>A memory to help reconnect</Text>
               <TextInput
                 style={[styles.input, styles.inputMultiline]}
-                placeholder="e.g. She loves painting with you on Sundays"
+                placeholder="e.g. She loves painting with you"
                 placeholderTextColor={colors.textMuted}
                 value={prompt}
                 onChangeText={setPrompt}
@@ -264,7 +274,7 @@ export default function AddLovedOne() {
             disabled={saving}
           >
             <Text style={styles.saveButtonText}>
-              {saving ? 'Saving...' : 'Add to Memory'}
+              {saving ? 'Saving...' : 'Save Changes'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -280,6 +290,21 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+  },
+  notFound: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notFoundText: {
+    fontSize: 18,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  backLink: {
+    fontSize: 16,
+    color: colors.primary,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -300,8 +325,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  placeholder: {
+  deleteButton: {
     width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
@@ -309,30 +338,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
   },
-  photoSection: {
+  avatarSection: {
     alignItems: 'center',
     marginBottom: spacing.xl,
-    padding: spacing.lg,
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.xl,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  sectionHint: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
   },
   avatar: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.cardAlt,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -349,23 +363,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   avatarText: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginTop: spacing.sm,
-  },
-  photoStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    backgroundColor: '#E8F5E9',
-    borderRadius: borderRadius.full,
-  },
-  photoStatusText: {
     fontSize: 13,
-    color: colors.success,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
   },
   changePhotoButton: {
     marginTop: spacing.sm,
